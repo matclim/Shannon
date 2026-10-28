@@ -63,6 +63,27 @@ target_link_libraries(
 )
 
 # Smoke-test input generator (build-only, not installed)
+# 2018 muon-flux test beam: drift tubes and RPC strips from aegir's
+# workflows/muflux2018_replay.jsonnet (src/muflux/muflux_digitiser.hpp)
+add_library(muflux_digitise MODULE src/muflux/muflux_digitise.cpp)
+target_include_directories(muflux_digitise PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(
+    muflux_digitise
+    PRIVATE phlex::module SHiP::DataModel SHiP::Random spdlog::spdlog
+)
+
+add_library(muflux_digits_output MODULE src/muflux/muflux_digits_output.cpp)
+target_include_directories(muflux_digits_output PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(
+    muflux_digits_output
+    PRIVATE phlex::module ROOT::ROOTNTuple spdlog::spdlog
+)
+
+enable_testing()
+add_executable(muflux_digitiser_test tests/muflux_digitiser_test.cpp)
+target_include_directories(muflux_digitiser_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_test(NAME muflux_digitiser COMMAND muflux_digitiser_test)
+
 add_executable(make_test_input tools/make_test_input.cpp)
 target_include_directories(
     make_test_input
@@ -76,7 +97,13 @@ target_link_libraries(
 # Install
 include(GNUInstallDirs)
 
-set(PLUGIN_TARGETS read_sim_file digitise_hits digitised_output_module)
+set(PLUGIN_TARGETS
+    read_sim_file
+    digitise_hits
+    digitised_output_module
+    muflux_digitise
+    muflux_digits_output
+)
 
 install(TARGETS ${PLUGIN_TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY workflows/ DESTINATION share/shannon/workflows)
